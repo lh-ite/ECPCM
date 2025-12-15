@@ -1,50 +1,30 @@
-function enhanced = LLCE(img, r)
-% LLCE - Local Contrast Enhancement
-% 局部对比度增强函数
-% 输入参数:
-%   img: 输入图像
-%   r: 局部窗口半径
-% 输出参数:
-%   enhanced: 增强后的图像
+function enhanceGray = LLCE(I, r)
+% 局部对比度增强 (Local Linear Contrast Enhancement)
+% 输入:
+%   I - 输入灰度图像
+%   r - 局部窗口半径
+% 输出:
+%   enhanceGray - 增强后的图像
+    I = double(I);
+    [hei, wid] = size(I);
+    N = boxfilter(ones(hei, wid), r);
+    Mean = boxfilter(I, r) ./ N;
+    p = (Mean + 2 * (I - Mean));
 
-if nargin < 2
-    r = 3;  % 默认窗口半径
-end
+    eps = 0.0001;
+    mean_I = boxfilter(I, r) ./ N;
+    mean_p = boxfilter(p, r) ./ N;
+    mean_Ip = boxfilter(I .* p, r) ./ N;
+    cov_Ip = mean_Ip - mean_I .* mean_p;
+    mean_II = boxfilter(I .* I, r) ./ N;
+    var_I = mean_II - mean_I .* mean_I;
+    a = cov_Ip ./ (var_I + eps);
+    b = mean_p - a .* mean_I;
+    mean_a = boxfilter(a, r) ./ N;
+    mean_b = boxfilter(b, r) ./ N;
+    enhanceGray = (mean_a .* I + mean_b);
 
-% 转换为double类型
-img = double(img);
-
-% 获取图像尺寸
-[h, w] = size(img);
-
-% 初始化输出图像
-enhanced = zeros(h, w);
-
-% 对每个像素应用局部对比度增强
-for i = 1:h
-    for j = 1:w
-        % 定义局部窗口
-        i_min = max(1, i - r);
-        i_max = min(h, i + r);
-        j_min = max(1, j - r);
-        j_max = min(w, j + r);
-
-        % 提取局部区域
-        local_region = img(i_min:i_max, j_min:j_max);
-
-        % 计算局部均值和标准差
-        local_mean = mean(local_region(:));
-        local_std = std(local_region(:));
-
-        % 应用局部对比度增强
-        if local_std > 0
-            enhanced(i, j) = (img(i, j) - local_mean) / local_std;
-        else
-            enhanced(i, j) = img(i, j) - local_mean;
-        end
-    end
-end
-
-% 归一化到0-1范围
-enhanced = (enhanced - min(enhanced(:))) / (max(enhanced(:)) - min(enhanced(:)));
+    enhanceGray = (enhanceGray + p) / 2;
+    enhanceGray = enhanceGray - min(enhanceGray(:));
+    enhanceGray = enhanceGray / max(enhanceGray(:));
 end

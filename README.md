@@ -1,142 +1,110 @@
-# OLE图像配准系统 (Optical-Infrared Image Registration)
+# OLE图像配准系统
 
-## 项目简介
+算法的可见光与红外图像配准系统。
 
-这是一个基于OLE (Optical-Infrared) 算法的图像配准系统，主要用于可见光和红外图像的自动配准。该系统实现了粗配准和精配准相结合的两阶段配准策略，能够有效处理多模态图像的配准问题。
-
-## 主要特性
-
-- **两阶段配准策略**: 粗配准 + 精配准
-- **多模态图像支持**: 可见光-红外图像配准
-- **鲁棒特征提取**: 基于相位一致性和CFOG特征
-- **非线性变换**: TPS (Thin Plate Spline) 变换支持
-- **高精度匹配**: 结合互信息和相关性的综合评价
-
-## 算法流程
-
-1. **粗配准阶段**:
-   - 基于SSIM和RMSE的尺度搜索
-   - 相位一致性特征提取
-   - LACE图像增强
-   - Harris角点检测
-   - 互信息和RMSE综合评价
-
-2. **精配准阶段**:
-   - CFOG特征提取
-   - FFT相关匹配
-   - 子像素级精度优化
-
-3. **几何变换**:
-   - TPS薄板样条变换
-   - 图像融合和镶嵌
-
-## 文件结构
+## 项目结构
 
 ```
+registration_OLE/
 ├── main.m                    # 主程序入口
-├── Functions/                # 函数库
-│   ├── coarseRegistrationSSIMRMSE.m    # 粗配准函数
-│   ├── fineRegistrationCFOG.m          # 精配准函数
-│   ├── TPStransformation.m             # TPS变换函数
-│   ├── phasecong3.m                    # 相位一致性特征
-│   ├── LACEgray.m                      # LACE灰度增强
-│   ├── mutualInformation.m             # 互信息计算
-│   ├── CFOGmatlab1.m                   # CFOG特征提取
-│   ├── fftMatch.m                      # FFT匹配
-│   ├── HMransac.m                      # RANSAC算法
-│   └── residualKRrobust.m              # KR鲁棒残差
-├── data/                    # 测试数据
-│   ├── vis1_v2.jpg         # 可见光图像
-│   ├── ir1.jpg            # 红外图像
-│   └── ...
-└── README.md               # 说明文档
+├── Functions/                 # 函数库文件夹
+│   ├── coarseRegistration.m   # 粗配准函数
+│   ├── fineRegistration.m     # 精配准函数
+│   ├── tpsTransform.m         # TPS变换函数
+│   ├── cfog.m                 # CFOG特征描述符
+│   ├── fftMatch.m             # FFT匹配
+│   ├── homographyRansac.m     # 单应性矩阵RANSAC估计
+│   ├── residualHomography.m   # 单应性残差计算
+│   ├── residualKRRobust.m     # KR鲁棒残差计算
+│   ├── laceGray.m             # LACE灰度增强
+│   ├── llce.m                 # 局部对比度增强
+│   ├── mutualInformation.m    # 互信息计算
+│   ├── gaussFilter.m          # 高斯滤波
+│   ├── boxFilter.m           # 盒式滤波
+│   └── lowpassFilter.m       # 低通滤波
+├── functions/                 # 第三方函数库（phasecong3等）
+├── data/                      # 图像数据文件夹
+└── README.md                  # 本文件
 ```
+
+## 功能说明
+
+### 主要功能模块
+
+1. **粗配准（Coarse Registration）**
+   - 基于相位一致性特征提取
+   - 使用Harris角点检测
+   - 通过互信息和RMSE综合得分优化尺度参数
+
+2. **精配准（Fine Registration）**
+   - 基于CFOG（Circular Frequency-Oriented Gradient）特征描述符
+   - 使用FFT进行局部匹配
+   - 对粗配准结果进行精细化
+
+3. **TPS变换（Thin Plate Spline Transform）**
+   - 基于薄板样条的非刚性变换
+   - 实现图像配准和拼接
+   - 支持重叠区域的平滑过渡
 
 ## 使用方法
 
-### 环境要求
+1. **准备数据**
+   - 将可见光图像放在 `data/` 文件夹，命名为 `vis{编号}_v2.jpg`
+   - 将红外图像放在 `data/` 文件夹，命名为 `ir{编号}.jpg`
 
-- MATLAB R2018b 或更高版本
+2. **运行主程序**
+   ```matlab
+   main.m
+   ```
+
+3. **参数设置**
+   在 `main.m` 中可以修改以下参数：
+   - `pointNum`: 每个网格块提取的特征点数量（默认100）
+   - `batchSize`: 精配准匹配窗口大小（默认80）
+   - `imNum`: 图像编号（默认1）
+
+
+
+## 依赖说明
+
+- MATLAB R2018b或更高版本
 - Image Processing Toolbox
+- Optimization Toolbox
+- Statistics and Machine Learning Toolbox
 
-### 运行步骤
 
-1. **设置参数**:
-   ```matlab
-   pointNum = 100;  % 特征点数量
-   batchSize = 80;  % 批处理窗口大小
-   imNum = 4;       % 测试图像对编号
-   ```
+## 注意事项
 
-2. **运行主程序**:
-   ```matlab
-   main  % 直接运行main.m
-   ```
+1. 确保 `functions/` 文件夹中包含 `phasecong3.m` 文件
+2. 图像路径和文件名需要符合规范
+3. 如果需要进行客观评价，需要准备 `c_points.mat` 文件
 
-3. **查看结果**:
-   - 程序会自动显示配准过程中的可视化结果
-   - 最终输出镶嵌图像和运行时间
 
-## 参数说明
 
-- `pointNum`: 粗配准阶段提取的特征点数量
-- `batchSize`: 精配准阶段的局部窗口大小
-- `imNum`: 测试图像对的编号 (1-19)
+### 本文引用
+如果我们的工作对您有帮助，请引用我们的论文：
 
-## 输出结果
+```bibtex
+@article{li2026ecpcs,
+  title={ECPCS: Enhanced contrast phase consistency space for visible and infrared image registration},
+  author={Li, Hao and Liu, Chenhua and Li, Maoyong and Deng, Lei and Dong, Mingli and Zhu, Lianqing},
+  journal={Optics and Lasers in Engineering},
+  volume={197},
+  pages={109472},
+  year={2026},
+  publisher={Elsevier}
+}
+```
 
-- **可视化结果**:
-  - 粗配准特征点可视化
-  - 精配准匹配结果
-  - 最终配准镶嵌图像
 
-- **定量评价** (可选):
-  - RMSE (均方根误差)
-  - 平均定位误差
-  - 最大定位误差
+```bibtex
+@article{li2025cross,
+  title={Cross-scale infrared and visible image registration based on phase consistency feature for UAV scenario},
+  author={Li, Hao and Liu, Chenhua and Li, Maoyong and Deng, Lei and Dong, Mingli and Zhu, Lianqing},
+  journal={Measurement},
+  pages={119340},
+  year={2025},
+  publisher={Elsevier}
+}
+```
 
-## 核心算法
-
-### 粗配准算法
-
-基于多尺度搜索和综合评价的粗配准方法：
-
-1. 尺度空间搜索 (1.0-1.5倍)
-2. 相位一致性特征 + LACE增强
-3. Harris角点检测
-4. 互信息(MI)和RMSE的加权综合评价
-
-### 精配准算法
-
-基于CFOG特征的子像素级精配准：
-
-1. CFOG特征提取
-2. 局部FFT相关匹配
-3. 子像素精度优化
-
-### TPS变换
-
-基于薄板样条的非线性几何变换：
-
-1. RANSAC内点筛选
-2. KR相机模型参数估计
-3. TPS插值变换
-4. 平滑过渡融合
-
-## 参考文献
-
-该实现基于以下论文和算法：
-
-- Phase Congruency特征提取
-- CFOG (Compact Feature of Oriented Gradients)
-- LACE (Local Adaptive Contrast Enhancement)
-- TPS (Thin Plate Spline) 变换
-- RANSAC算法
-
-## 许可证
-
-本项目仅供学术研究使用。
-
-## 联系方式
-
-如有问题或建议，请联系项目维护者。
