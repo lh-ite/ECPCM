@@ -22,7 +22,7 @@ registration_OLE/
 │   ├── gaussFilter.m          # 高斯滤波
 │   ├── boxFilter.m           # 盒式滤波
 │   └── lowpassFilter.m       # 低通滤波
-├── functions/                 # 第三方函数库（phasecong3等）
+├── functions/                 # 第三方函数库
 ├── data/                      # 图像数据文件夹
 └── README.md                  # 本文件
 ```
